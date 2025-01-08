@@ -29,14 +29,6 @@ jobs:
   build:
     name: Build Drupal Site
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: pipeline
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -48,34 +40,11 @@ jobs:
   
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
-  
-      - name: Wait for MySQL to be ready
-        run: |
-          for i in {30..0}; do
-            if mysqladmin ping -h 127.0.0.1 --silent; then
-              echo "MySQL is ready."
-              break
-            fi
-            echo "Waiting for MySQL..."
-            sleep 1
-          done
-          if [ $i -eq 0 ]; then
-            echo "MySQL did not start in time."
-            exit 1
-          fi
-  
-      - name: Verify MySQL Connection
-        run: |
-          mysql -h 127.0.0.1 -u root -proot -e "SHOW DATABASES;"
-  
-      - name: Build and Install Drupal
-        run: |
-          ./vendor/bin/drush site:install minimal --yes \
-          --db-url=mysql://root:root@127.0.0.1/pipeline \
-          --account-name=admin \
-          --account-pass=admin \
-          --site-name="Drupal Test"
 
+      - name: Use External Database
+        run: |
+          echo "Configuring database settings for external connection."
+          sed -i 's|\$databases\[\'default\'\]\[\'default\'\] = .*|\$databases\[\'default\'\]\[\'default\'\] = array (\n  \"database\" => \"${{ secrets.DB_NAME }}\",\n  \"username\" => \"${{ secrets.DB_USER }}\",\n  \"password\" => \"${{ secrets.DB_PASSWORD }}\",\n  \"host\" => \"${{ secrets.DB_HOST }}\",\n  \"port\" => \"${{ secrets.DB_PORT }}\",\n  \"driver\" => \"mysql\",\n);|' web/sites/default/settings.php
 
   measure:
     name: Run Lighthouse
