@@ -41,16 +41,8 @@ jobs:
       - name: Install Lighthouse CLI
         run: npm install -g lighthouse puppeteer
   
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-  
-      - name: List Web Directory
-        run: ls -l web
-  
       - name: Start PHP Server
-        run: php -S localhost:8080 -t web &
+        run: php -S localhost:8080 -t web > server.log 2>&1 &
   
       - name: Wait for Server
         run: sleep 10
@@ -60,6 +52,10 @@ jobs:
   
       - name: Run Lighthouse
         run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --ignore-certificate-errors --disable-web-security --allow-insecure-localhost"
+  
+      - name: Display PHP Server Logs
+        if: failure()
+        run: cat server.log
   
       - name: Upload Lighthouse Report
         uses: actions/upload-artifact@v3
