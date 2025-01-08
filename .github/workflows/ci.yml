@@ -64,29 +64,35 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
+  
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
-
-      - name: Install Lighthouse CLI
-        run: npm install -g lighthouse puppeteer
-
+          node-version: '18' # Use Node.js 18+ for native fetch support.
+  
+      - name: Install Lighthouse CLI and Puppeteer
+        run: |
+          npm install -g lighthouse@10 puppeteer@21 # Use compatible versions.
+  
       - name: Start PHP Server
-        run: php -S localhost:8080 -t web > server.log 2>&1 &
-
+        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
+  
       - name: Wait for Server
         run: sleep 10
-
+  
       - name: Run Lighthouse
-        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
-
+        run: |
+          lighthouse http://127.0.0.1:8080 \
+            --output=json \
+            --output-path=./lighthouse-report.json \
+            --chrome-flags="--headless --no-sandbox"
+  
       - name: Upload Lighthouse Report
         uses: actions/upload-artifact@v3
         with:
           name: lighthouse-report
           path: ./lighthouse-report.json
+
 
   secure:
     name: Dependency Check
