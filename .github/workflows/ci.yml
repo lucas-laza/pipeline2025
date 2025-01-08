@@ -74,6 +74,10 @@ jobs:
         run: |
           npm install -g @lhci/cli@0.14.x
 
+      - name: Configure Lighthouse CI
+        run: |
+          echo "module.exports = {\n  ci: {\n    collect: {\n      staticDistDir: './web',\n      startServerCommand: 'php -S 127.0.0.1:8080 -t web',\n      url: ['http://127.0.0.1:8080'],\n    },\n    upload: {\n      target: 'temporary-public-storage',\n    },\n  },\n};" > lighthouserc.js
+
       - name: Start PHP Server
         run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
 
