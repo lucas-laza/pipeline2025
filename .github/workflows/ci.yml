@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: Run Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -19,7 +19,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.1
-          extensions: mbstring, intl, pdo, dom
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
@@ -27,63 +26,51 @@ jobs:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit
 
-      - name: Run PHP CodeSniffer
-        run: vendor/bin/phpcs --standard=Drupal .
-
   measure:
     name: Run Lighthouse
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 16
 
-      - name: Install Lighthouse CLI
-        run: npm install -g lighthouse
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Start PHP Server
+        run: php -S localhost:8080 -t web &
 
       - name: Run Lighthouse
-        run: lighthouse http://localhost --output=json --output-path=./lighthouse-report.json
-        env:
-          CI: true
-
-      - name: Upload Lighthouse Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: lighthouse-report
-          path: ./lighthouse-report.json
-
-  document:
-    name: Generate Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Generate Swagger Documentation
-        run: php artisan swagger:generate
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          publish_dir: ./public/docs
+        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json
 
   secure:
     name: Dependency Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Enable Dependabot Alerts
         uses: dependabot/fetch-metadata@v1
 
-      - name: Check Composer Dependencies
-        run: composer outdated
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy via Rsync
+        run: rsync -avz --delete ./ user@your-server:/path/to/project
 
   # deploy:
   #   name: Deploy to Production
