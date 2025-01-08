@@ -26,33 +26,32 @@ jobs:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
-
   measure:
-  name: Run Lighthouse
-  runs-on: ubuntu-latest
-  steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+    name: Run Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-    - name: Install Lighthouse CLI
-      run: npm install -g lighthouse
+      - name: Install Lighthouse CLI
+        run: npm install -g lighthouse
 
-    - name: Start PHP Server
-      run: php -S localhost:8080 -t web &
+      - name: Start PHP Server
+        run: php -S localhost:8080 -t web &
 
-    - name: Run Lighthouse
-      run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json
+      - name: Run Lighthouse
+        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json
 
-    - name: Upload Lighthouse Report
-      uses: actions/upload-artifact@v3
-      with:
-        name: lighthouse-report
-        path: ./lighthouse-report.json
+      - name: Upload Lighthouse Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-report
+          path: ./lighthouse-report.json
 
   secure:
     name: Dependency Check
@@ -62,25 +61,9 @@ jobs:
       - name: Enable Dependabot Alerts
         uses: dependabot/fetch-metadata@v1
 
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy via Rsync
-        run: rsync -avz --delete ./ user@your-server:/path/to/project
-
   # deploy:
   #   name: Deploy to Production
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-22.04
   #   steps:
   #     - name: Checkout Code
   #       uses: actions/checkout@v4
@@ -92,8 +75,3 @@ jobs:
 
   #     - name: Deploy via Rsync
   #       run: rsync -avz --delete ./ user@your-server:/path/to/project
-
-  #     - name: Clear Cache with Drush
-  #       run: drush cache:rebuild
-  #       env:
-  #         DRUSH_ALIAS: "@your-alias"
