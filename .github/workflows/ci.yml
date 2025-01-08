@@ -58,7 +58,7 @@ jobs:
           sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
           sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
 
-  lighthouse:
+  measure:
     name: Run Lighthouse CI
     runs-on: ubuntu-latest
     steps:
@@ -71,12 +71,7 @@ jobs:
           node-version: '18'
 
       - name: Install Lighthouse CI
-        run: |
-          npm install -g @lhci/cli@0.14.x
-
-      - name: Configure Lighthouse CI
-        run: |
-          echo "module.exports = {\n  ci: {\n    collect: {\n      staticDistDir: './web',\n      startServerCommand: 'php -S 127.0.0.1:8080 -t web',\n      url: ['http://127.0.0.1:8080'],\n    },\n    upload: {\n      target: 'temporary-public-storage',\n    },\n  },\n};" > lighthouserc.js
+        run: npm install -g @lhci/cli@0.14.x
 
       - name: Start PHP Server
         run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
@@ -86,6 +81,7 @@ jobs:
 
       - name: Run Lighthouse CI
         run: lhci autorun
+
 
   secure:
     name: Dependency Check
