@@ -57,46 +57,31 @@ jobs:
           cp .env.example .env
           sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
           sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
-  
-  measure:
-    name: Run Lighthouse
+
+  lighthouse:
+    name: Run Lighthouse CI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-  
-      - name: Install Lighthouse CLI and Puppeteer
+
+      - name: Install Lighthouse CI
         run: |
-          npm install -g lighthouse puppeteer
-  
+          npm install -g @lhci/cli@0.14.x
+
       - name: Start PHP Server
-        run: php -S 0.0.0.0:8080 -t web > server.log 2>&1 &
-  
+        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
+
       - name: Wait for Server
-        run: sleep 20
-  
-      - name: Check Server Status
-        run: curl -I http://127.0.0.1:8080 || (echo "Server is not responding!" && exit 1)
-  
-      - name: Run Lighthouse
-        run: |
-          lighthouse http://127.0.0.1:8080 \
-            --output=json \
-            --output-path=./lighthouse-report.json \
-            --chrome-flags="--headless --no-sandbox --ignore-certificate-errors --disable-dev-shm-usage"
-  
-      - name: Upload Lighthouse Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: lighthouse-report
-          path: ./lighthouse-report.json
+        run: sleep 10
 
-
+      - name: Run Lighthouse CI
+        run: lhci autorun
 
   secure:
     name: Dependency Check
