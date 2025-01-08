@@ -49,8 +49,19 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
   
-      - name: Wait for MySQL
-        run: sleep 20
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {30..0}; do
+            if mysqladmin ping -h 127.0.0.1 --silent; then
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 1
+          done
+          if [ $i -eq 0 ]; then
+            echo "MySQL did not start in time."
+            exit 1
+          fi
   
       - name: Build and Install Drupal
         run: |
@@ -89,7 +100,6 @@ jobs:
         with:
           name: lighthouse-report
           path: ./lighthouse-report.json
-
 
   secure:
     name: Dependency Check
