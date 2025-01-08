@@ -57,7 +57,7 @@ jobs:
           cp .env.example .env
           sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
           sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
-
+  
   measure:
     name: Run Lighthouse
     runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
         with:
           node-version: '18'
   
-      - name: Install Latest Lighthouse and Puppeteer
+      - name: Install Lighthouse CLI and Puppeteer
         run: |
           npm install -g lighthouse puppeteer
   
@@ -80,18 +80,23 @@ jobs:
       - name: Wait for Server
         run: sleep 10
   
+      - name: Debug Server Accessibility
+        run: |
+          curl -I http://127.0.0.1:8080 || (echo "Server is not accessible!" && exit 1)
+  
       - name: Run Lighthouse
         run: |
           lighthouse http://127.0.0.1:8080 \
             --output=json \
             --output-path=./lighthouse-report.json \
-            --chrome-flags="--headless --no-sandbox"
+            --chrome-flags="--headless --no-sandbox --allow-insecure-localhost"
   
       - name: Upload Lighthouse Report
         uses: actions/upload-artifact@v3
         with:
           name: lighthouse-report
           path: ./lighthouse-report.json
+
 
 
   secure:
