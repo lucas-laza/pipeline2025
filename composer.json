@@ -94,6 +94,7 @@
         }
     },
     "require-dev": {
+        "drush/drush": "^13.3",
         "phpunit/phpunit": "^9.6"
     }
 }
