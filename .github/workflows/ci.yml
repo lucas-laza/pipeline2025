@@ -53,6 +53,7 @@ jobs:
         run: |
           for i in {30..0}; do
             if mysqladmin ping -h 127.0.0.1 --silent; then
+              echo "MySQL is ready."
               break
             fi
             echo "Waiting for MySQL..."
@@ -63,6 +64,10 @@ jobs:
             exit 1
           fi
   
+      - name: Verify MySQL Connection
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "SHOW DATABASES;"
+  
       - name: Build and Install Drupal
         run: |
           ./vendor/bin/drush site:install minimal --yes \
@@ -70,6 +75,7 @@ jobs:
           --account-name=admin \
           --account-pass=admin \
           --site-name="Drupal Test"
+
 
   measure:
     name: Run Lighthouse
