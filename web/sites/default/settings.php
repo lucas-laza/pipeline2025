@@ -892,16 +892,23 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 # if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
-$databases['default']['default'] = array (
-  'database' => 'test-pipeline',
-  'username' => 'test-pipeline',
-  'password' => 'SVsPRQ!b.ZGcnzdG',
-  'prefix' => '',
-  'host' => '46.105.113.109',
-  'port' => '3306',
-  'isolation_level' => 'READ COMMITTED',
-  'driver' => 'mysql',
-  'namespace' => 'Drupal\\mysql\\Driver\\Database\\mysql',
-  'autoload' => 'core/modules/mysql\\src\\Driver\\Database\\mysql\\',
-);
+$config['system.logging']['error_level'] = 'verbose';
+
+if (file_exists(__DIR__ . '/../../../.env')) {
+  $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../');
+  $dotenv->load();
+}
+
+$databases['default']['default'] = [
+  'database' => $_ENV['DB_DATABASE'] ?? 'default_db',
+  'username' => $_ENV['DB_USERNAME'] ?? 'default_user',
+  'password' => $_ENV['DB_PASSWORD'] ?? '',
+  'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
+  'port' => $_ENV['DB_PORT'] ?? '3306',
+  'driver' => $_ENV['DB_DRIVER'] ?? 'mysql',
+  'namespace' => $_ENV['DB_NAMESPACE'] ?? 'Drupal\mysql\Driver\Database\mysql',
+  'autoload' => $_ENV['DB_AUTOLOAD'] ?? 'core/modules/mysql/src/Driver/Database/mysql/',
+  'isolation_level' => $_ENV['DB_ISOLATION_LEVEL'] ?? 'READ COMMITTED',
+];
+
 $settings['config_sync_directory'] = 'sites/default/files/config_5h0CW52HULb6_qOHOMN85NJ9t7-sshL-K8lCIT7EStbsFTDJqEPB4wgEdq9wuxt40WKcASqDjA/sync';
