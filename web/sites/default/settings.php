@@ -893,11 +893,11 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
 $databases['default']['default'] = array (
-  'database' => 'pipeline',
-  'username' => 'root',
-  'password' => '',
+  'database' => 'test-pipeline',
+  'username' => 'test-pipeline',
+  'password' => 'SVsPRQ!b.ZGcnzdG',
   'prefix' => '',
-  'host' => 'localhost',
+  'host' => '46.105.113.109',
   'port' => '3306',
   'isolation_level' => 'READ COMMITTED',
   'driver' => 'mysql',
