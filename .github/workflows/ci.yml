@@ -52,10 +52,11 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Use External Database
+      - name: Configure .env File
         run: |
-          echo "Configuring database settings for external connection."
-          sed -i 's|\$databases\[\'default\'\]\[\'default\'\] = .*|\$databases\[\'default\'\]\[\'default\'\] = array (\n  "database" => "${{ secrets.DB_DATABASE }}",\n  "username" => "${{ secrets.DB_USERNAME }}",\n  "password" => "${{ secrets.DB_PASSWORD }}",\n  "host" => "${{ secrets.DB_HOST }}",\n  "port" => "${{ env.DB_PORT }}",\n  "driver" => "${{ env.DB_DRIVER }}",\n  "namespace" => "${{ env.DB_NAMESPACE }}",\n  "autoload" => "${{ env.DB_AUTOLOAD }}",\n  "isolation_level" => "${{ env.DB_ISOLATION_LEVEL }}",\n);|' web/sites/default/settings.php
+          cp .env.example .env
+          sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
+          sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
 
   measure:
     name: Run Lighthouse
