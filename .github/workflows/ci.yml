@@ -1,5 +1,16 @@
 name: CI/CD Pipeline
 
+env:
+  DB_DATABASE: pipeline
+  DB_USERNAME: pipeline_user
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: 3306
+  DB_DRIVER: mysql
+  DB_NAMESPACE: Drupal\mysql\Driver\Database\mysql
+  DB_AUTOLOAD: core/modules/mysql/src/Driver/Database/mysql/
+  DB_ISOLATION_LEVEL: READ COMMITTED
+
 on:
   push:
     branches: [ "main" ]
@@ -18,7 +29,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
@@ -29,14 +40,6 @@ jobs:
   build:
     name: Build Drupal Site
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: pipeline
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,21 +47,15 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
   
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
-  
-      - name: Wait for MySQL
-        run: sleep 20
-  
-      - name: Build and Install Drupal
+
+      - name: Use External Database
         run: |
-          ./vendor/bin/drush site:install minimal --yes \
-          --db-url=mysql://root:root@127.0.0.1/pipeline \
-          --account-name=admin \
-          --account-pass=admin \
-          --site-name="Drupal Test"
+          echo "Configuring database settings for external connection."
+          sed -i 's|\$databases\[\'default\'\]\[\'default\'\] = .*|\$databases\[\'default\'\]\[\'default\'\] = array (\n  "database" => "${{ secrets.DB_DATABASE }}",\n  "username" => "${{ secrets.DB_USERNAME }}",\n  "password" => "${{ secrets.DB_PASSWORD }}",\n  "host" => "${{ secrets.DB_HOST }}",\n  "port" => "${{ env.DB_PORT }}",\n  "driver" => "${{ env.DB_DRIVER }}",\n  "namespace" => "${{ env.DB_NAMESPACE }}",\n  "autoload" => "${{ env.DB_AUTOLOAD }}",\n  "isolation_level" => "${{ env.DB_ISOLATION_LEVEL }}",\n);|' web/sites/default/settings.php
 
   measure:
     name: Run Lighthouse
@@ -89,7 +86,6 @@ jobs:
         with:
           name: lighthouse-report
           path: ./lighthouse-report.json
-
 
   secure:
     name: Dependency Check
