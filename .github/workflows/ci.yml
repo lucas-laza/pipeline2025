@@ -26,44 +26,78 @@ jobs:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
+  build:
+    name: Build Drupal Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.1
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Set File Permissions
+        run: |
+          mkdir -p web/sites/default/files
+          chmod -R 755 web/sites/default
+          chmod -R 775 web/sites/default/files
+
+      - name: Set up Drupal Settings
+        run: |
+          cp web/sites/default/default.settings.php web/sites/default/settings.php
+          chmod 644 web/sites/default/settings.php
+
+      - name: Install Drush
+        run: composer require drush/drush
+
+      - name: Install Drupal Site
+        run: |
+          ./vendor/bin/drush site:install minimal --yes \
+          --db-url=mysql://root:root@127.0.0.1/drupal_test_db \
+          --account-name=admin \
+          --account-pass=admin \
+          --site-name="Drupal Test"
+
+      - name: Start PHP Server
+        run: php -S localhost:8080 -t web > server.log 2>&1 &
+
+      - name: Wait for Server
+        run: sleep 10
+
   measure:
     name: Run Lighthouse
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-  
+          node-version: '16'
+
       - name: Install Lighthouse CLI
         run: npm install -g lighthouse puppeteer
-  
+
       - name: Start PHP Server
         run: php -S localhost:8080 -t web > server.log 2>&1 &
-  
+
       - name: Wait for Server
         run: sleep 10
-  
-      - name: Validate Server URL
-        run: curl -I http://localhost:8080
-  
+
       - name: Run Lighthouse
-        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --ignore-certificate-errors --disable-web-security --allow-insecure-localhost"
-  
-      - name: Display PHP Server Logs
-        if: failure()
-        run: cat server.log
-  
+        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
+
       - name: Upload Lighthouse Report
         uses: actions/upload-artifact@v3
         with:
           name: lighthouse-report
           path: ./lighthouse-report.json
-
-
 
 
   secure:
