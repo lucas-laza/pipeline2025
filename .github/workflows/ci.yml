@@ -52,21 +52,10 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
-            - name: Use External Database
+      - name: Use External Database
         run: |
           echo "Configuring database settings for external connection."
-          sed -i "s|\$databases\['default'\]\['default'\] = .*|\$databases['default']['default'] = array (\
-  'database' => '${{ secrets.DB_DATABASE }}',\
-  'username' => '${{ secrets.DB_USERNAME }}',\
-  'password' => '${{ secrets.DB_PASSWORD }}',\
-  'host' => '${{ secrets.DB_HOST }}',\
-  'port' => '3306',\
-  'driver' => 'mysql',\
-  'namespace' => 'Drupal\\\\mysql\\\\Driver\\\\Database\\\\mysql',\
-  'autoload' => 'core/modules/mysql/src/Driver/Database/mysql/',\
-  'isolation_level' => 'READ COMMITTED',\
-);|" web/sites/default/settings.php
-
+          sed -i 's|\$databases\[\'default\'\]\[\'default\'\] = .*|\$databases\[\'default\'\]\[\'default\'\] = array (\n  "database" => "${{ secrets.DB_DATABASE }}",\n  "username" => "${{ secrets.DB_USERNAME }}",\n  "password" => "${{ secrets.DB_PASSWORD }}",\n  "host" => "${{ secrets.DB_HOST }}",\n  "port" => "${{ env.DB_PORT }}",\n  "driver" => "${{ env.DB_DRIVER }}",\n  "namespace" => "${{ env.DB_NAMESPACE }}",\n  "autoload" => "${{ env.DB_AUTOLOAD }}",\n  "isolation_level" => "${{ env.DB_ISOLATION_LEVEL }}",\n);|' web/sites/default/settings.php
 
   measure:
     name: Run Lighthouse
