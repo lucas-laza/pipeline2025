@@ -31,7 +31,7 @@ jobs:
         with:
           php-version: 8.2
   
-      - name: Install Dependencies
+      - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Configure .env File
@@ -55,6 +55,25 @@ jobs:
         run: |
           ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Initialize npm (if needed)
+        run: |
+          if [ ! -f package.json ]; then
+            echo "Initializing npm project..."
+            npm init -y
+          fi
+          cat package.json
+
+      - name: Install npm Dependencies
+        run: npm install || echo "No dependencies to install."
+
+      - name: Verify npm Configuration
+        run: cat package.json || echo "No package.json found."
+
   test:
     name: Run Tests
     needs: build
@@ -68,7 +87,7 @@ jobs:
         with:
           php-version: 8.2
 
-      - name: Install Dependencies
+      - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Verify MySQL Connection
@@ -88,9 +107,6 @@ jobs:
           php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
           sleep 5
           curl -v http://127.0.0.1:8080/ || exit 1
-
-      - name: Display settings.php
-        run: cat web/sites/default/settings.php
 
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
@@ -123,6 +139,31 @@ jobs:
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
+  document:
+    name: Deploy Documentation
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Documentation Dependencies
+        run: npm install
+
+      - name: Build Documentation
+        run: npm run docs:build
+
+      - name: Deploy Documentation to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          publish_dir: ./docs/dist
+
   secure:
     name: Dependency Check
     runs-on: ubuntu-22.04
@@ -130,18 +171,3 @@ jobs:
     steps:
       - name: Enable Dependabot Alerts
         uses: dependabot/fetch-metadata@v1
-
-  # deploy:
-  #   name: Deploy to Production
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up SSH
-  #       uses: webfactory/ssh-agent@v0.7.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-  #     - name: Deploy via Rsync
-  #       run: rsync -avz --delete ./ user@your-server:/path/to/project
