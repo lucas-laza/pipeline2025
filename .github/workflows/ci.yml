@@ -43,6 +43,15 @@ jobs:
       - name: Verify .env Configuration
         run: cat .env
 
+      - name: Install Drupal Site
+        run: |
+          ./vendor/bin/drush site:install minimal --yes \
+          --db-url=mysql://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}/test-pipeline \
+          --account-name=admin --account-pass=admin --site-name="Drupal CI Test"
+
+      - name: Verify Site Installation
+        run: ./vendor/bin/drush status
+
   test:
     name: Run Tests
     needs: build
