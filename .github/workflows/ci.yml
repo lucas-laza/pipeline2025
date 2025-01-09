@@ -48,7 +48,7 @@ jobs:
           ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly."; exit 1; }
 
       - name: Clear Drupal Cache
-        run: ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
+      #  run: ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
       - name: Install Node.js
         uses: actions/setup-node@v3
