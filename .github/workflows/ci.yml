@@ -51,9 +51,9 @@ jobs:
         run: |
           ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
 
-     # - name: Clear Drupal Cache
-      #  run: |
-       #   ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
+  #    - name: Clear Drupal Cache
+  #      run: |
+  #        ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
   test:
     name: Run Tests
@@ -137,7 +137,7 @@ jobs:
           mkdir -p docs
           ./vendor/bin/drush config:export -y
           ./vendor/bin/drush config:status > docs/config-status.txt
-          ./vendor/bin/drush site:status > docs/site-status.txt
+          ./vendor/bin/drush core:status > docs/site-status.txt
 
       - name: Deploy Documentation to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
