@@ -43,7 +43,7 @@ jobs:
       - name: Verify .env Configuration
         run: cat .env
 
-  test:
+test:
     name: Run Tests
     needs: build
     runs-on: ubuntu-latest
@@ -64,6 +64,7 @@ jobs:
           for i in {1..10}; do
             if mysqladmin ping -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" --silent; then
               echo "MySQL is ready!";
+              mysql -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" -e "USE ${DB_DATABASE}; SHOW TABLES;";
               break;
             fi;
             echo "Waiting for MySQL...";
