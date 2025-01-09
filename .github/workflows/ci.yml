@@ -40,6 +40,7 @@ jobs:
   build:
     name: Build Drupal Site
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -61,7 +62,7 @@ jobs:
   measure:
     name: Run Lighthouse CI
     runs-on: ubuntu-latest
-    needs: build # Ensure measure waits for build to finish
+    needs: build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
