@@ -40,9 +40,11 @@ jobs:
           sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
           sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
 
+      - name: Verify .env Configuration
+        run: cat .env
+
   test:
     name: Run Tests
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -65,13 +67,13 @@ jobs:
             fi;
             echo "Waiting for MySQL...";
             sleep 5;
-          done
+          done || { echo "MySQL connection failed!"; exit 1; }
 
       - name: Ping Homepage
         run: |
           php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
           sleep 5
-          curl -s http://127.0.0.1:8080/ || exit 1
+          curl -v http://127.0.0.1:8080/ || exit 1
 
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
