@@ -61,6 +61,7 @@ jobs:
   measure:
     name: Run Lighthouse CI
     runs-on: ubuntu-latest
+    needs: build # Ensure measure waits for build to finish
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -81,6 +82,7 @@ jobs:
 
       - name: Run Lighthouse CI
         run: lhci autorun
+
 
 
   secure:
