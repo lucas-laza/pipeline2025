@@ -60,6 +60,12 @@ jobs:
         run: |
           ./vendor/bin/drush status || exit 1
 
+      - name: Ping Home Page and Log HTML
+        run: |
+          php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
+          sleep 5
+          curl -s http://127.0.0.1:8080/ || exit 1
+
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
