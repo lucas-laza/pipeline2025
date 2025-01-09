@@ -19,24 +19,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Run PHPUnit Tests
-        run: vendor/bin/phpunit --configuration phpunit.xml --verbose
-
   build:
     name: Build Drupal Site
     needs: test
@@ -59,9 +41,32 @@ jobs:
           sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
           sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
 
+  test:
+    name: Run Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Verify Site is Running
+        run: |
+          ./vendor/bin/drush status || exit 1
+
+      - name: Run PHPUnit Tests
+        run: vendor/bin/phpunit --configuration phpunit.xml --verbose
+
   measure:
     name: Run Lighthouse CI
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
