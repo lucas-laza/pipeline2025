@@ -80,7 +80,7 @@ test:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
-  measure:
+measure:
     name: Run Lighthouse CI
     needs: test
     runs-on: ubuntu-latest
