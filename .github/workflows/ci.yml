@@ -45,17 +45,17 @@ jobs:
 
       - name: Verify Drush Installation
         run: |
-          ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly."; exit 1; }
+          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
 
       - name: Test Drush Status
         run: |
           ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
 
-      #- name: Clear Drupal Cache
-       # run: |
-        #  ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
+      - name: Clear Drupal Cache
+        run: |
+          ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
-  test:
+test:
     name: Run Tests
     needs: build
     runs-on: ubuntu-latest
@@ -130,7 +130,7 @@ jobs:
 
       - name: Verify Drush Installation for Documentation
         run: |
-          ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly for documentation."; exit 1; }
+          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
 
       - name: Generate Drupal Documentation
         run: |
