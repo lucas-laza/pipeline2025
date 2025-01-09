@@ -43,15 +43,6 @@ jobs:
       - name: Verify .env Configuration
         run: cat .env
 
-      - name: Install Drupal Site
-        run: |
-          ./vendor/bin/drush site:install minimal --yes \
-          --db-url=mysql://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}/test-pipeline \
-          --account-name=admin --account-pass=admin --site-name="Drupal CI Test"
-
-      - name: Verify Site Installation
-        run: ./vendor/bin/drush status
-
   test:
     name: Run Tests
     needs: build
@@ -127,18 +118,3 @@ jobs:
     steps:
       - name: Enable Dependabot Alerts
         uses: dependabot/fetch-metadata@v1
-
-  # deploy:
-  #   name: Deploy to Production
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up SSH
-  #       uses: webfactory/ssh-agent@v0.7.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-  #     - name: Deploy via Rsync
-  #       run: rsync -avz --delete ./ user@your-server:/path/to/project
