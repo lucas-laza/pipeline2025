@@ -77,6 +77,9 @@ jobs:
           sleep 5
           curl -v http://127.0.0.1:8080/ || exit 1
 
+      - name: Display settings.php
+        run: cat web/sites/default/settings.php
+
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
