@@ -148,7 +148,6 @@ jobs:
   secure:
     name: Dependency Check
     runs-on: ubuntu-22.04
-    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Enable Dependabot Alerts
         uses: dependabot/fetch-metadata@v1
