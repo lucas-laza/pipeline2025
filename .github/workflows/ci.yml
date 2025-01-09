@@ -56,18 +56,24 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Wait for MySQL
+        run: |
+          for i in {1..10}; do
+            if mysqladmin ping -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" --silent; then
+              echo "MySQL is ready!";
+              break;
+            fi;
+            echo "Waiting for MySQL...";
+            sleep 5;
+          done
+
       - name: Verify Site is Running
         run: |
           ./vendor/bin/drush status || exit 1
 
-      - name: Ping Home Page and Log HTML
-        run: |
-          php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
-          sleep 5
-          curl -s http://127.0.0.1:8080/ || exit 1
-
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
+
 
   measure:
     name: Run Lighthouse CI
