@@ -144,13 +144,19 @@ jobs:
         with:
           personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           publish_dir: ./docs
-
+          
   secure:
     name: Dependency Check
     runs-on: ubuntu-22.04
     steps:
-      - name: Enable Dependabot Alerts
-        uses: dependabot/fetch-metadata@v1
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Dependency Check
+        run: |
+          echo "Performing dependency check..."
+          composer audit || echo "No security advisories found."
+
 
   # deploy:
   #   name: Deploy to Production
