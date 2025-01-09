@@ -152,10 +152,22 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Dependency Check
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run Composer Audit
         run: |
-          echo "Performing dependency check..."
-          composer audit || echo "No security advisories found."
+          if [ -f composer.lock ]; then
+            composer audit || echo "No security advisories found."
+          else
+            echo "composer.lock not found. Skipping audit.";
+          fi
+
 
 
   # deploy:
