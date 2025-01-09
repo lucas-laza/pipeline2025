@@ -147,22 +147,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install Documentation Dependencies
-        run: npm install
-
-      - name: Build Documentation
-        run: npm run docs:build
+      - name: Generate Drupal Documentation
+        run: |
+          ./vendor/bin/drush config:export -y
+          ./vendor/bin/drush config:status > docs/config-status.txt
+          ./vendor/bin/drush site:status > docs/site-status.txt
 
       - name: Deploy Documentation to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          publish_dir: ./docs/dist
+          publish_dir: ./docs
 
   secure:
     name: Dependency Check
