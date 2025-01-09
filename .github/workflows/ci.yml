@@ -31,7 +31,7 @@ jobs:
         with:
           php-version: 8.2
   
-      - name: Install Composer Dependencies
+      - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Configure .env File
@@ -47,27 +47,13 @@ jobs:
         run: |
           ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly."; exit 1; }
 
-     # - name: Clear Drupal Cache
-      #  run: ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Initialize npm (if needed)
+      - name: Test Drush Status
         run: |
-          if [ ! -f package.json ]; then
-            echo "Initializing npm project..."
-            npm init -y
-          fi
-          cat package.json
+          ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
 
-      - name: Install npm Dependencies
-        run: npm install || echo "No dependencies to install."
-
-      - name: Verify npm Configuration
-        run: cat package.json || echo "No package.json found."
+      #- name: Clear Drupal Cache
+       # run: |
+        #  ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
   test:
     name: Run Tests
@@ -82,7 +68,7 @@ jobs:
         with:
           php-version: 8.2
 
-      - name: Install Composer Dependencies
+      - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: Verify MySQL Connection
@@ -142,6 +128,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Verify Drush Installation for Documentation
+        run: |
+          ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly for documentation."; exit 1; }
+
       - name: Generate Drupal Documentation
         run: |
           mkdir -p docs
@@ -154,3 +144,26 @@ jobs:
         with:
           personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           publish_dir: ./docs
+
+  secure:
+    name: Dependency Check
+    runs-on: ubuntu-22.04
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Enable Dependabot Alerts
+        uses: dependabot/fetch-metadata@v1
+
+  # deploy:
+  #   name: Deploy to Production
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up SSH
+  #       uses: webfactory/ssh-agent@v0.7.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  #     - name: Deploy via Rsync
+  #       run: rsync -avz --delete ./ user@your-server:/path/to/project
