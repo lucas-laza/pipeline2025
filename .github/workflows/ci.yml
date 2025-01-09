@@ -43,7 +43,7 @@ jobs:
       - name: Verify .env Configuration
         run: cat .env
 
-test:
+  test:
     name: Run Tests
     needs: build
     runs-on: ubuntu-latest
@@ -80,7 +80,7 @@ test:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
-measure:
+  measure:
     name: Run Lighthouse CI
     needs: test
     runs-on: ubuntu-latest
