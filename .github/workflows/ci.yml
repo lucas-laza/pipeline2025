@@ -55,7 +55,7 @@ jobs:
         run: |
           ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
-test:
+  test:
     name: Run Tests
     needs: build
     runs-on: ubuntu-latest
