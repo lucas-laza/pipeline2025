@@ -40,6 +40,7 @@ jobs:
   build:
     name: Build Drupal Site
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -52,14 +53,16 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Use External Database
+      - name: Configure .env File
         run: |
-          echo "Configuring database settings for external connection."
-          sed -i 's|\$databases\[\'default\'\]\[\'default\'\] = .*|\$databases\[\'default\'\]\[\'default\'\] = array (\n  "database" => "${{ secrets.DB_DATABASE }}",\n  "username" => "${{ secrets.DB_USERNAME }}",\n  "password" => "${{ secrets.DB_PASSWORD }}",\n  "host" => "${{ secrets.DB_HOST }}",\n  "port" => "${{ env.DB_PORT }}",\n  "driver" => "${{ env.DB_DRIVER }}",\n  "namespace" => "${{ env.DB_NAMESPACE }}",\n  "autoload" => "${{ env.DB_AUTOLOAD }}",\n  "isolation_level" => "${{ env.DB_ISOLATION_LEVEL }}",\n);|' web/sites/default/settings.php
+          cp .env.example .env
+          sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
+          sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
 
   measure:
-    name: Run Lighthouse
+    name: Run Lighthouse CI
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -67,25 +70,21 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
 
-      - name: Install Lighthouse CLI
-        run: npm install -g lighthouse puppeteer
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.14.x
 
       - name: Start PHP Server
-        run: php -S localhost:8080 -t web > server.log 2>&1 &
+        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
 
       - name: Wait for Server
         run: sleep 10
 
-      - name: Run Lighthouse
-        run: lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
+      - name: Run Lighthouse CI
+        run: lhci autorun
 
-      - name: Upload Lighthouse Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: lighthouse-report
-          path: ./lighthouse-report.json
+
 
   secure:
     name: Dependency Check
