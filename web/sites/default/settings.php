@@ -900,10 +900,10 @@ if (file_exists(__DIR__ . '/../../../.env')) {
 }
 
 $databases['default']['default'] = [
-  'database' => $_ENV['DB_DATABASE'] ?? 'default_db',
-  'username' => $_ENV['DB_USERNAME'] ?? 'default_user',
-  'password' => $_ENV['DB_PASSWORD'] ?? '',
-  'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
+  'database' => $_ENV['DB_DATABASE'] ?? 'test-pipeline',
+  'username' => $_ENV['DB_USERNAME'] ?? 'test-pipeline',
+  'password' => $_ENV['DB_PASSWORD'] ?? 'jIOPH4653*z',
+  'host' => $_ENV['DB_HOST'] ?? '104.155.46.118',
   'port' => $_ENV['DB_PORT'] ?? '3306',
   'driver' => $_ENV['DB_DRIVER'] ?? 'mysql',
   'namespace' => $_ENV['DB_NAMESPACE'] ?? 'Drupal\mysql\Driver\Database\mysql',
