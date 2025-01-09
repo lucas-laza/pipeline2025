@@ -34,6 +34,14 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Verify Drush Installation
+        run: |
+          if [ ! -f "./vendor/bin/drush" ]; then
+            echo "Drush is not installed, installing via Composer..."
+            composer require drush/drush
+          fi
+          ./vendor/bin/drush --version || { echo "Drush installation failed."; exit 1; }
+
       - name: Configure .env File
         run: |
           cp .env.example .env
@@ -43,36 +51,13 @@ jobs:
       - name: Verify .env Configuration
         run: cat .env
 
-      - name: Verify Drush Installation
-        run: |
-          ./vendor/bin/drush --version || { echo "Drush is not installed or configured properly."; exit 1; }
-
       - name: Test Drush Status
         run: |
           ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
 
-      #- name: Clear Drupal Cache
+     # - name: Clear Drupal Cache
       #  run: |
-      #    ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Initialize npm (if needed)
-        run: |
-          if [ ! -f package.json ]; then
-            echo "Initializing npm project..."
-            npm init -y
-          fi
-          cat package.json
-
-      - name: Install npm Dependencies
-        run: npm install || echo "No dependencies to install."
-
-      - name: Verify npm Configuration
-        run: cat package.json || echo "No package.json found."
+       #   ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
 
   test:
     name: Run Tests
@@ -146,6 +131,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Verify Drush Installation
+        run: |
+          if [ ! -f "./vendor/bin/drush" ]; then
+            echo "Drush is not installed, installing via Composer..."
+            composer require drush/drush
+          fi
+          ./vendor/bin/drush --version || { echo "Drush installation failed."; exit 1; }
 
       - name: Generate Drupal Documentation
         run: |
