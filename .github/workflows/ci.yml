@@ -21,6 +21,7 @@ on:
 jobs:
   build:
     name: Build Drupal Site
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -56,7 +57,7 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Wait for MySQL
+      - name: Verify MySQL Connection
         run: |
           for i in {1..10}; do
             if mysqladmin ping -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" --silent; then
@@ -67,13 +68,14 @@ jobs:
             sleep 5;
           done
 
-      - name: Verify Site is Running
+      - name: Ping Homepage
         run: |
-          ./vendor/bin/drush status || exit 1
+          php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
+          sleep 5
+          curl -s http://127.0.0.1:8080/ || exit 1
 
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
-
 
   measure:
     name: Run Lighthouse CI
