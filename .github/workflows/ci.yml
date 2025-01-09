@@ -39,6 +39,7 @@ jobs:
 
   build:
     name: Build Drupal Site
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
