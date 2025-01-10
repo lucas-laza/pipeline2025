@@ -205,6 +205,17 @@ jobs:
             cd /home/test-pipeline
             git pull origin main
             composer install --no-dev --optimize-autoloader
+
+            # Check if Drush is installed, install if missing
+            if [ ! -f ./vendor/bin/drush ]; then
+              echo "Drush not found. Installing Drush..."
+              composer require drush/drush
+            fi
+            
+            # Verify Drush Installation
+            ./vendor/bin/drush --version || { echo "Drush installation failed."; exit 1; }
+
+            # Run deployment commands with Drush
             ./vendor/bin/drush cr
             ./vendor/bin/drush updatedb -y
             ./vendor/bin/drush config:import -y
