@@ -1,0 +1,7 @@
+custom_test_coucou.message:
+  path: '/custom-test-coucou'
+  defaults:
+    _controller: '\Drupal\custom_test_coucou\Controller\CustomTestCoucouController::displayMessage'
+    _title: 'Custom Test Coucou'
+  requirements:
+    _permission: 'access content'

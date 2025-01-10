@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * Le fichier principal du module custom_test_coucou.
+ */
+
+/**
+ * Implémentation de hook_help().
+ * Affiche une description du module sur la page d'aide.
+ */
+function custom_test_coucou_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.custom_test_coucou':
+      return '<p>' . t('Ce module affiche des messages "Coucou ceci est un test" sur le site.') . '</p>';
+  }
+}
+
+/**
+ * Implémentation de hook_page_attachments().
+ * Ajoute un message sur toutes les pages du site.
+ */
+function custom_test_coucou_page_attachments(array &$attachments) {
+  \Drupal::messenger()->addMessage(t('Coucou ceci est un test.'));
+}

@@ -1,0 +1,7 @@
+name: 'Custom Test Coucou'
+type: module
+description: 'Module affichant des messages sur le site : "Coucou ceci est un test".'
+core_version_requirement: ^10
+package: Custom
+dependencies:
+  - drupal:system
