@@ -141,7 +141,7 @@ jobs:
         run: sleep 20
   
       - name: Debug Server URL
-        run: curl -I http://127.0.0.1:8080
+        run: curl -v http://127.0.0.1:8080/ || exit 1
   
       - name: Show PHP Server Logs
         run: cat server.log
@@ -154,38 +154,49 @@ jobs:
 
   document:
     name: Deploy Documentation
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer Dependencies
+        run: composer install
+
       - name: Verify Drush Installation for Documentation
         run: |
           ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
-  
-      - name: Generate Drupal Documentation
+
+      - name: Generate Drupal Site Documentation
         run: |
-          mkdir -p docs
+          mkdir -p docs/drupal
           ./vendor/bin/drush config:export -y || echo "No configuration exported."
-          ./vendor/bin/drush config:status > docs/config-status.txt || echo "No configuration status available." > docs/config-status.txt
-          ./vendor/bin/drush core:status > docs/site-status.txt || echo "No site status available." > docs/site-status.txt
-  
-          # Create a fallback index.html if required files are missing
-          echo "<html><body><h1>Drupal Documentation</h1>" > docs/index.html
+          ./vendor/bin/drush config:status > docs/drupal/config-status.txt || echo "No configuration status available." > docs/drupal/config-status.txt
+          ./vendor/bin/drush core:status > docs/drupal/site-status.txt || echo "No site status available." > docs/drupal/site-status.txt
+
+      - name: Install phpDocumentor
+        run: |
+          curl -L -o phpdoc.phar https://github.com/phpDocumentor/phpDocumentor/releases/latest/download/phpDocumentor.phar
+          chmod +x phpdoc.phar
+          sudo mv phpdoc.phar /usr/local/bin/phpdoc
+
+      - name: Generate PHP Code Documentation
+        run: |
+          mkdir -p docs/code
+          phpdoc --directory=web/modules/custom --target=docs/code --ignore="*/node_modules/*,*/vendor/*"
+
+      - name: Create Fallback Documentation Index
+        run: |
+          echo "<html><body><h1>Documentation</h1>" > docs/index.html
           echo "<ul>" >> docs/index.html
-          if [ -s docs/config-status.txt ]; then
-            echo "<li><a href='config-status.txt'>Configuration Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Configuration Status: Not Available</li>" >> docs/index.html
-          fi
-          if [ -s docs/site-status.txt ]; then
-            echo "<li><a href='site-status.txt'>Site Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Site Status: Not Available</li>" >> docs/index.html
-          fi
+          echo "<li><a href='drupal/'>Drupal Configuration and Status</a></li>" >> docs/index.html
+          echo "<li><a href='code/'>PHP Code Documentation</a></li>" >> docs/index.html
           echo "</ul></body></html>" >> docs/index.html
-  
+
       - name: Deploy Documentation to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
