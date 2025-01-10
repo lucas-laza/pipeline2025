@@ -92,42 +92,48 @@ jobs:
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit --configuration phpunit.xml --verbose
 
-  measure:
-    name: Run Lighthouse CI
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+measure:
+  name: Run Lighthouse CI
+  needs: test
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.2
 
+    - name: Install Dependencies
+      run: composer install --no-interaction --prefer-dist
 
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    - name: Install Lighthouse CI
+      run: |
+        npm install -g @lhci/cli@0.14.x
 
-      - name: Install Lighthouse CI
-        run: |
-          npm install -g @lhci/cli@0.14.x
+    - name: Start PHP Server
+      run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
 
-      - name: Start PHP Server
-        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
+    - name: Wait for Server
+      run: sleep 20
 
-      - name: Wait for Server
-        run: sleep 10
+    - name: Debug Server URL
+      run: curl -I http://127.0.0.1:8080
 
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+    - name: Show PHP Server Logs
+      run: cat server.log
+
+    - name: Run Lighthouse CI in Debug Mode
+      run: lhci autorun --collect.url=http://127.0.0.1:8080 --verbose
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
 
   document:
     name: Deploy Documentation
