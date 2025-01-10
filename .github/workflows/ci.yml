@@ -153,37 +153,56 @@ jobs:
 
 
   document:
-    name: Generate Documentation
+    name: Deploy Documentation
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set Up PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.2
-          extensions: mbstring, xml, pdo, sqlite
-          tools: composer
+          php-version: '8.2'
 
-      - name: Install Dependencies
+      - name: Install Composer Dependencies
+        run: composer install
+
+      - name: Verify Drush Installation for Documentation
         run: |
-          composer install --no-interaction --prefer-dist
+          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
 
-      - name: Install PHPDoc
-        run: composer require --dev phpdocumentor/phpdocumentor
-
-      - name: Generate Documentation for Custom Modules
+      - name: Generate Drupal Site Documentation
         run: |
-          mkdir -p docs
-          ./vendor/bin/phpdoc -d ./web/modules/custom -t ./docs
+          mkdir -p docs/drupal
+          ./vendor/bin/drush config:export -y || echo "No configuration exported."
+          ./vendor/bin/drush config:status > docs/drupal/config-status.txt || echo "No configuration status available." > docs/drupal/config-status.txt
+          ./vendor/bin/drush core:status > docs/drupal/site-status.txt || echo "No site status available." > docs/drupal/site-status.txt
+
+      - name: Install phpDocumentor
+        run: |
+          curl -L -o phpdoc.phar https://github.com/phpDocumentor/phpDocumentor/releases/latest/download/phpDocumentor.phar
+          chmod +x phpdoc.phar
+          sudo mv phpdoc.phar /usr/local/bin/phpdoc
+
+      - name: Generate PHP Code Documentation
+        run: |
+          mkdir -p docs/code
+          phpdoc --directory=web/modules/custom --target=docs/code --ignore="*/node_modules/*,*/vendor/*"
+
+      - name: Create Fallback Documentation Index
+        run: |
+          echo "<html><body><h1>Documentation</h1>" > docs/index.html
+          echo "<ul>" >> docs/index.html
+          echo "<li><a href='drupal/'>Drupal Configuration and Status</a></li>" >> docs/index.html
+          echo "<li><a href='code/'>PHP Code Documentation</a></li>" >> docs/index.html
+          echo "</ul></body></html>" >> docs/index.html
 
       - name: Deploy Documentation to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           publish_dir: ./docs
+
           
   secure:
     name: Dependency Check
