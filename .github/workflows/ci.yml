@@ -125,10 +125,6 @@ jobs:
         run: |
           ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
 
-      - name: Clear Drupal Cache
-        run: |
-          ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
-  
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
