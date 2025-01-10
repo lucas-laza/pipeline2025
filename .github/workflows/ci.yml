@@ -153,45 +153,37 @@ jobs:
 
 
   document:
-    name: Deploy Documentation
-    needs: build
+    name: Generate Documentation
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
-      - name: Verify Drush Installation for Documentation
+
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, xml, pdo, sqlite
+          tools: composer
+
+      - name: Install Dependencies
         run: |
-          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
-  
-      - name: Generate Drupal Documentation
+          composer install --no-interaction --prefer-dist
+
+      - name: Install PHPDoc
+        run: composer require --dev phpdocumentor/phpdocumentor
+
+      - name: Generate Documentation for Custom Modules
         run: |
           mkdir -p docs
-          ./vendor/bin/drush config:export -y || echo "No configuration exported."
-          ./vendor/bin/drush config:status > docs/config-status.txt || echo "No configuration status available." > docs/config-status.txt
-          ./vendor/bin/drush core:status > docs/site-status.txt || echo "No site status available." > docs/site-status.txt
-  
-          # Create a fallback index.html if required files are missing
-          echo "<html><body><h1>Drupal Documentation</h1>" > docs/index.html
-          echo "<ul>" >> docs/index.html
-          if [ -s docs/config-status.txt ]; then
-            echo "<li><a href='config-status.txt'>Configuration Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Configuration Status: Not Available</li>" >> docs/index.html
-          fi
-          if [ -s docs/site-status.txt ]; then
-            echo "<li><a href='site-status.txt'>Site Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Site Status: Not Available</li>" >> docs/index.html
-          fi
-          echo "</ul></body></html>" >> docs/index.html
-  
+          ./vendor/bin/phpdoc -d ./web/modules/custom -t ./docs
+
       - name: Deploy Documentation to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           publish_dir: ./docs
-
           
   secure:
     name: Dependency Check
