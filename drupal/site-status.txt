@@ -9,13 +9,13 @@ Database         : Connected
 Drupal bootstrap : Successful                                                
 Default theme    : olivero                                                   
 Admin theme      : claro                                                     
-PHP binary       : /usr/bin/php8.1                                           
-PHP config       : /etc/php/8.1/cli/php.ini                                  
+PHP binary       : /usr/bin/php8.2                                           
+PHP config       : /etc/php/8.2/cli/php.ini                                  
 PHP OS           : Linux                                                     
-PHP version      : 8.1.2-1ubuntu2.20                                         
+PHP version      : 8.2.27                                                    
 Drush script     : /home/runner/work/pipeline2025/pipeline2025/vendor/bin/dr 
-                   ush                                                       
-Drush version    : 12.5.3.0                                                  
+                   ush.php                                                   
+Drush version    : 13.3.3.0                                                  
 Drush temp       : /tmp                                                      
 Drush configs    : /home/runner/work/pipeline2025/pipeline2025/vendor/drush/ 
                    drush/drush.yml                                           
