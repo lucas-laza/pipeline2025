@@ -4,7 +4,7 @@ env:
   DB_DATABASE: test-pipeline
   DB_USERNAME: test-pipeline
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_HOST: mysql
   DB_PORT: 3306
   DB_DRIVER: mysql
   DB_NAMESPACE: Drupal\mysql\Driver\Database\mysql
@@ -22,217 +22,99 @@ jobs:
   build:
     name: Build Drupal Site
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        ports:
+          - "3306:3306"
+        env:
+          MYSQL_DATABASE: ${{ env.DB_DATABASE }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      php-container:
+        image: php:8.2-apache
+        ports:
+          - "8080:80"
+        options: >-
+          --entrypoint "/bin/sh -c 'apachectl start && tail -f /dev/null'"
+        volumes:
+          - .:/var/www/html
+        depends_on:
+          - mysql
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-  
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-  
+
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: docker exec php-container composer install --no-interaction --prefer-dist
 
-      - name: Configure .env File
-        run: |
-          cp .env.example .env
-          sed -i 's|db_password|${{ secrets.DB_PASSWORD }}|' .env
-          sed -i 's|db_host|${{ secrets.DB_HOST }}|' .env
-
-      - name: Verify .env Configuration
-        run: cat .env
-
-      - name: Verify Drush Installation
-        run: |
-          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
-
-      - name: Test Drush Status
-        run: |
-          ./vendor/bin/drush status || { echo "Drush cannot connect to the database."; exit 1; }
-
-  #    - name: Clear Drupal Cache
-  #      run: |
-  #        ./vendor/bin/drush cr || echo "Drush cache clear failed. Ensure the database and Drupal installation are ready."
+      - name: Set Up Drupal
+        run: docker exec php-container ./vendor/bin/drush site-install --yes
 
   test:
     name: Run Tests
     needs: build
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        ports:
+          - "3306:3306"
+        env:
+          MYSQL_DATABASE: ${{ env.DB_DATABASE }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      php-container:
+        image: php:8.2-apache
+        ports:
+          - "8080:80"
+        options: >-
+          --entrypoint "/bin/sh -c 'apachectl start && tail -f /dev/null'"
+        volumes:
+          - .:/var/www/html
+        depends_on:
+          - mysql
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Verify MySQL Connection
-        run: |
-          for i in {1..10}; do
-            if mysqladmin ping -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" --silent; then
-              echo "MySQL is ready!";
-              mysql -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" -e "USE ${DB_DATABASE}; SHOW TABLES;";
-              break;
-            fi;
-            echo "Waiting for MySQL...";
-            sleep 5;
-          done || { echo "MySQL connection failed!"; exit 1; }
-
-      - name: Ping Homepage
-        run: |
-          php -S 127.0.0.1:8080 -t web > /dev/null 2>&1 &
-          sleep 5
-          curl -v http://127.0.0.1:8080/ || exit 1
-
       - name: Run PHPUnit Tests
-        run: vendor/bin/phpunit --configuration phpunit.xml --verbose
+        run: docker exec php-container vendor/bin/phpunit --configuration phpunit.xml --verbose
 
   measure:
     name: Run Lighthouse CI
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        ports:
+          - "3306:3306"
+        env:
+          MYSQL_DATABASE: ${{ env.DB_DATABASE }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      php-container:
+        image: php:8.2-apache
+        ports:
+          - "8080:80"
+        options: >-
+          --entrypoint "/bin/sh -c 'apachectl start && tail -f /dev/null'"
+        volumes:
+          - .:/var/www/html
+        depends_on:
+          - mysql
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-  
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-  
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist
-  
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-  
       - name: Install Lighthouse CI
-        run: |
-          npm install -g @lhci/cli@0.14.x
-  
-      - name: Start PHP Server
-        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
-  
-      - name: Wait for Server
-        run: sleep 20
-  
-      - name: Debug Server URL
-        run: curl -I http://127.0.0.1:8080
-  
-      - name: Show PHP Server Logs
-        run: cat server.log
-  
-      - name: Run Lighthouse CI in Debug Mode
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Run Lighthouse CI
         run: lhci autorun --collect.url=http://127.0.0.1:8080 --verbose
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-
-  document:
-    name: Deploy Documentation
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-  
-      - name: Verify Drush Installation for Documentation
-        run: |
-          ./vendor/bin/drush --version || composer require drush/drush && ./vendor/bin/drush --version
-  
-      - name: Generate Drupal Documentation
-        run: |
-          mkdir -p docs
-          ./vendor/bin/drush config:export -y || echo "No configuration exported."
-          ./vendor/bin/drush config:status > docs/config-status.txt || echo "No configuration status available." > docs/config-status.txt
-          ./vendor/bin/drush core:status > docs/site-status.txt || echo "No site status available." > docs/site-status.txt
-  
-          # Create a fallback index.html if required files are missing
-          echo "<html><body><h1>Drupal Documentation</h1>" > docs/index.html
-          echo "<ul>" >> docs/index.html
-          if [ -s docs/config-status.txt ]; then
-            echo "<li><a href='config-status.txt'>Configuration Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Configuration Status: Not Available</li>" >> docs/index.html
-          fi
-          if [ -s docs/site-status.txt ]; then
-            echo "<li><a href='site-status.txt'>Site Status</a></li>" >> docs/index.html
-          else
-            echo "<li>Site Status: Not Available</li>" >> docs/index.html
-          fi
-          echo "</ul></body></html>" >> docs/index.html
-  
-      - name: Deploy Documentation to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          publish_dir: ./docs
-
-          
-  secure:
-    name: Dependency Check
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-
-      - name: Install Composer Dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Run Composer Audit
-        run: |
-          if [ -f composer.lock ]; then
-            composer audit || echo "No security advisories found."
-          else
-            echo "composer.lock not found. Skipping audit.";
-          fi
-
-
-  deploy:
-    name: Deploy to Production
-    needs: test
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install SSH Client
-        run: sudo apt-get update && sudo apt-get install -y openssh-client sshpass
-
-      - name: Deploy to Production Server
-        env:
-          SSH_HOST: ${{ secrets.SECRET_SSH_HOST }}
-          SSH_PASSWORD: ${{ secrets.SECRET_SSH_PASSWORD }}
-        run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@$SSH_HOST << 'EOF'
-            cd /home/test-pipeline
-            git pull origin main
-            composer install --no-dev --optimize-autoloader
-
-            # Check if Drush is installed, install if missing
-            #if [ ! -f ./vendor/bin/drush ]; then
-            #  echo "Drush not found. Installing Drush..."
-            #  composer require drush/drush
-            #fi
-            
-            # Verify Drush Installation
-           # ./vendor/bin/drush --version || { echo "Drush installation failed."; exit 1; }
-
-            # Run deployment commands with Drush
-            #./vendor/bin/drush cr
-            #./vendor/bin/drush updatedb -y
-            #./vendor/bin/drush config:import -y
-          EOF
-
