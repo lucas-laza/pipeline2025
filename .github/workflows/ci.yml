@@ -133,6 +133,12 @@ jobs:
       - name: Install Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.14.x
+
+      - name: Ping Homepage
+        run: |
+          php -S 127.0.0.1:8888 -t web > /dev/null 2>&1 &
+          sleep 5
+          curl -v http://127.0.0.1:8888/ || exit 1
   
       - name: Run Lighthouse CI in Debug Mode
         run: |
