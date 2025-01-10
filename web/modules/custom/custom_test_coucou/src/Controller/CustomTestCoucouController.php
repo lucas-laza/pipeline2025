@@ -20,4 +20,14 @@ class CustomTestCoucouController extends ControllerBase {
       '#markup' => $this->t('Coucou ceci est un test.'),
     ];
   }
+
+
+  /**
+   * Cette fonction ne sert à rien
+   *
+   * @return null
+   */
+  public function uselessFunction() {
+    return null;
+  }
 }
