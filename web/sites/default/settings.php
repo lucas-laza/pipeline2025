@@ -893,6 +893,8 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
 $config['system.logging']['error_level'] = 'verbose';
+$settings['config_sync_directory'] = 'sites/default/files/config';
+
 
 if (file_exists(__DIR__ . '/../../../.env')) {
   $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../');
