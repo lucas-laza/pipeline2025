@@ -94,7 +94,7 @@ jobs:
 
   measure:
     name: Run Lighthouse CI
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
