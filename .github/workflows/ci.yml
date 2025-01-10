@@ -134,20 +134,11 @@ jobs:
         run: |
           npm install -g @lhci/cli@0.14.x
   
-      - name: Start PHP Server
-        run: php -S 127.0.0.1:8080 -t web > server.log 2>&1 &
-  
-      - name: Wait for Server
-        run: sleep 20
-  
-      - name: Debug Server URL
-        run: curl -v http://127.0.0.1:8080/ || exit 1
-  
-      - name: Show PHP Server Logs
-        run: cat server.log
-  
       - name: Run Lighthouse CI in Debug Mode
-        run: lhci autorun --collect.url=http://127.0.0.1:8080 --verbose
+        run: |
+          lhci autorun \
+            --collect.url=http://127.0.0.1:8080 \
+            --verbose
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
