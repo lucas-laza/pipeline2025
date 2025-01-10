@@ -141,7 +141,7 @@ jobs:
         run: sleep 20
   
       - name: Debug Server URL
-        run: curl -I http://127.0.0.1:8080
+        run: curl -v http://127.0.0.1:8080/ || exit 1
   
       - name: Show PHP Server Logs
         run: cat server.log
